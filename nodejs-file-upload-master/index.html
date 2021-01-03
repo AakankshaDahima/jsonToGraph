@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Form</title>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://code.highcharts.com/modules/series-label.js"></script>
+  <script src="https://code.highcharts.com/modules/exporting.js"></script>
+  <script src="https://code.highcharts.com/modules/export-data.js"></script>
+  <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+  <script src="https://code.highcharts.com/modules/data.js"></script>
+  <script src="https://code.highcharts.com/modules/parallel-coordinates.js"></script>
+  <script src="https://code.highcharts.com/modules/sankey.js"></script>
+  <script src ="http://requirejs.org/docs/release/2.1.5/comments/require.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+  <style>
+    #csv {
+      display: none;
+    }
+    .highcharts-figure, .highcharts-data-table table {
+      min-width: 310px; 
+      max-width: 800px;
+      margin: 1em auto;
+    }
+    .highcharts-data-table table {
+      font-family: Verdana, sans-serif;
+      border-collapse: collapse;
+      border: 1px solid #EBEBEB;
+      margin: 10px auto;
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+    }
+    .highcharts-data-table caption {
+      padding: 1em 0;
+      font-size: 1.2em;
+      color: #555;
+    }
+    .highcharts-data-table th {
+      font-weight: 600;
+      padding: 0.5em;
+    }
+    .highcharts-data-table td, .highcharts-data-table th, .highcharts-data-table caption {
+      padding: 0.5em;
+    }
+    .highcharts-data-table thead tr, .highcharts-data-table tr:nth-child(even) {
+      background: #f8f8f8;
+    }
+    .highcharts-data-table tr:hover {
+      background: #f1f7ff;
+    }
+    .highcharts-series-hover path {
+      stroke: rgb(255, 66, 66);
+      stroke-width: 2px;
+    }    
+  </style>
+</head>
+<body>
+
+<form action="/upload" enctype="multipart/form-data" method="POST">
+  <fieldset>
+    <legend>Login</legend>
+
+    <div>
+      <label for="title">Title</label>
+      <input type="text" name="title" required>
+    </div>
+
+    <div>
+      <label for="image">Image</label>
+      <input type="file" name="image" accept=".csv, application/JSON" required>
+    </div>
+
+    <input type="submit" value="Upload it!">
+  </fieldset>
+
+  <select class="selectpicker" data-style="btn-info" name="selectpicker" onChange={handleChange}>
+    <optgroup label="Select Table">
+      <option name="" value="0">Select table</option>
+      <option name="table1" value="1">Table 1</option>
+      <option name="table2" value="2">Table 2</option>
+      <option name="table3" value="3">Table 3</option>
+    </optgroup>
+  </select>
+
+</form>
+
+<br>
+<!-- <form id="tableForm" action="/getJson" method="get">
+  <select class="selectpicker" data-style="btn-info" name="selectpicker">
+      <optgroup label="Select Table">
+          <option name="" value="0">Select table</option>
+          <option name="table1" value="1">Table 1</option>
+          <option name="table2" value="2">Table 2</option>
+          <option name="table3" value="3">Table 3</option>
+      </optgroup>
+  </select>
+  <input type="submit" />
+</form> -->
+<br>
+
+<figure class="highcharts-figure">
+  <div id="container"></div>
+  <p class="highcharts-description">
+  </p>
+</figure>
+
+<script>
+  // var express = require('express'),
+  // app = express();
+  // app.use(express.bodyParser());
+  // app.get('/', function (req, res) {
+  //   res.sendfile('views/index.html');
+  // });
+  // app.get('/getJson', function (req, res) {
+  //   console.log(req.body.selectpicker);
+  // });
+  // app.listen(process.env.PORT);
+
+  function handleChange(event) {
+    console.log(event.target.value);
+  };
+
+  var allGraphTypes = ["line", "parallel", "sankey"];
+  var graphType = allGraphTypes[2];
+  console.log("type- ", graphType);
+
+  if(graphType == "parallel"){
+    Highcharts.getJSON(
+      // './uploaded-files/test.json',  
+      'https://cdn.jsdelivr.net/gh/highcharts/highcharts@v7.0.0/samples/data/marathon.json',
+      function (data) {
+          console.log("data-> ", data);
+          Highcharts.chart('container', {
+            chart: {
+                type: 'spline',
+                parallelCoordinates: true,
+                parallelAxes: {
+                    lineWidth: 2
+                }
+            },
+            title: {
+                text: 'Marathon set'
+            },
+            plotOptions: {
+                series: {
+                    animation: false,
+                    marker: {
+                        enabled: false,
+                        states: {
+                            hover: {
+                                enabled: false
+                            }
+                        }
+                    },
+                    states: {
+                        hover: {
+                            halo: {
+                                size: 0
+                            }
+                        }
+                    },
+                    events: {
+                        mouseOver: function () {
+                            this.group.toFront();
+                        }
+                    }
+                }
+            },
+            tooltip: {
+                pointFormat: '<span style="color:{point.color}">\u25CF</span>' +
+                    '{series.name}: <b>{point.formattedValue}</b><br/>'
+            },
+            xAxis: {
+                categories: [
+                    'Training date',
+                    'Miles for training run',
+                    'Training time',
+                    'Shoe brand',
+                    'Running pace per mile',
+                    'Short or long',
+                    'After 2004'
+                ],
+                offset: 10
+            },
+            yAxis: [{
+                type: 'datetime',
+                tooltipValueFormat: '{value:%Y-%m-%d}'
+            }, {
+                min: 0,
+                tooltipValueFormat: '{value} mile(s)'
+            }, {
+                type: 'datetime',
+                min: 0,
+                labels: {
+                    format: '{value:%H:%M}'
+                }
+            }, {
+                categories: [
+                    'Other',
+                    'Adidas',
+                    'Mizuno',
+                    'Asics',
+                    'Brooks',
+                    'New Balance',
+                    'Izumi'
+                ]
+            }, {
+                type: 'datetime'
+            }, {
+                categories: ['&gt; 5miles', '&lt; 5miles']
+            }, {
+                categories: ['Before', 'After']
+            }],
+            colors: ['rgba(11, 200, 200, 0.1)'],
+            series: data.map(function (set, i) {
+                return {
+                    name: 'Runner ' + i,
+                    data: set,
+                    shadow: false
+                };
+            })
+        });
+      }
+    );
+  }
+  else if(graphType == "sankey"){
+    Highcharts.chart('container', {
+      title: {
+        text: 'Highcharts Sankey Diagram'
+      },
+      accessibility: {
+        point: {
+            valueDescriptionFormat: '{index}. {point.from} to {point.to}, {point.weight}.'
+        }
+      },
+      series: [{
+        keys: ['from', 'to', 'weight'],
+        data: [
+          ['Brazil', 'Portugal', 5],
+          ['Brazil', 'France', 1],
+          ['Brazil', 'Spain', 1],
+          ['Brazil', 'England', 1],
+          ['Canada', 'Portugal', 1],
+          ['Canada', 'France', 5],
+          ['Canada', 'England', 1],
+          ['Mexico', 'Portugal', 1],
+          ['Mexico', 'France', 1],
+          ['Mexico', 'Spain', 5],
+          ['Mexico', 'England', 1],
+          ['USA', 'Portugal', 1],
+          ['USA', 'France', 1],
+          ['USA', 'Spain', 1],
+          ['USA', 'England', 5],
+          ['Portugal', 'Angola', 2],
+          ['Portugal', 'Senegal', 1],
+          ['Portugal', 'Morocco', 1],
+          ['Portugal', 'South Africa', 3],
+          ['France', 'Angola', 1],
+          ['France', 'Senegal', 3],
+          ['France', 'Mali', 3],
+          ['France', 'Morocco', 3],
+          ['France', 'South Africa', 1],
+          ['Spain', 'Senegal', 1],
+          ['Spain', 'Morocco', 3],
+          ['Spain', 'South Africa', 1],
+          ['England', 'Angola', 1],
+          ['England', 'Senegal', 1],
+          ['England', 'Morocco', 2],
+          ['England', 'South Africa', 7],
+          ['South Africa', 'China', 5],
+          ['South Africa', 'India', 1],
+          ['South Africa', 'Japan', 3],
+          ['Angola', 'China', 5],
+          ['Angola', 'India', 1],
+          ['Angola', 'Japan', 3],
+          ['Senegal', 'China', 5],
+          ['Senegal', 'India', 1],
+          ['Senegal', 'Japan', 3],
+          ['Mali', 'China', 5],
+          ['Mali', 'India', 1],
+          ['Mali', 'Japan', 3],
+          ['Morocco', 'China', 5],
+          ['Morocco', 'India', 1],
+          ['Morocco', 'Japan', 3]
+        ],
+        type: 'sankey',
+        name: 'Sankey demo series'
+      }]
+    });
+  }
+  else if(graphType == "line"){
+    Highcharts.chart('container', {
+      title: {
+        text: 'Solar Employment Growth by Sector, 2010-2016'
+      },
+      subtitle: {
+        text: 'Source: thesolarfoundation.com'
+      },
+      yAxis: {
+        title: {
+          text: 'Number of Employees'
+        }
+      },
+      xAxis: {
+        accessibility: {
+          rangeDescription: 'Range: 2010 to 2017'
+        }
+      },
+      legend: {
+        layout: 'vertical',
+        align: 'right',
+        verticalAlign: 'middle'
+      },
+      plotOptions: {
+        series: {
+          label: {
+            connectorAllowed: false
+          },
+          pointStart: 2010
+        }
+      },
+      series: [{
+        name: 'Installation',
+        data: [43934, 52503, 57177, 69658, 97031, 119931, 137133, 154175]
+      }, {
+        name: 'Manufacturing',
+        data: [24916, 24064, 29742, 29851, 32490, 30282, 38121, 40434]
+      }, {
+        name: 'Sales & Distribution',
+        data: [11744, 17722, 16005, 19771, 20185, 24377, 32147, 39387]
+      }, {
+        name: 'Project Development',
+        data: [null, null, 7988, 12169, 15112, 22452, 34400, 34227]
+      }, {
+        name: 'Other',
+        data: [12908, 5948, 8105, 11248, 8989, 11816, 18274, 18111]
+      }],
+      responsive: {
+        rules: [{
+          condition: {
+            maxWidth: 500
+          },
+          chartOptions: {
+            legend: {
+              layout: 'horizontal',
+              align: 'center',
+              verticalAlign: 'bottom'
+            }
+          }
+        }]
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
